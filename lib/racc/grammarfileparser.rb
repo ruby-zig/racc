@@ -401,6 +401,7 @@ module Racc
   class GrammarFileScanner
 
     def initialize(str, filename = '-')
+      @encoding = str.encoding
       @lines  = str.b.split(/\n|\r\n|\r/)
       @filename = filename
       @lineno = -1
@@ -456,7 +457,24 @@ module Racc
           elsif ch = reads(/\A./)
             case ch
             when '"', "'"
-              yield [:STRING, eval(scan_quoted(ch))]
+              string_literal = scan_quoted(ch)
+              if ch == "'"
+                # We can't use String#undump for '...'.
+                string = string_literal[1..-2].gsub(/\\\\|\\'/) do |matched|
+                  matched[1]
+                end
+              else
+                # String#undump rejects non-ASCII
+                # characters. string_literal is ASCII-8BIT because
+                # @lines is ASCII-8BIT. We can use \xHH here to
+                # convert non-ASCII characters to ASCII characters.
+                string_literal = string_literal.gsub(/[\x80-\xff]/n) do |c|
+                  "\\x%02x" % c.ord
+                end
+                string = string_literal.undump
+              end
+              string.force_encoding(@encoding)
+              yield [:STRING, string]
             when '{'
               lineno = lineno()
               yield [:ACTION, SourceText.new(scan_action(), @filename, lineno)]
