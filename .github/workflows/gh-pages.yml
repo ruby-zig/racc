@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: "${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository) && 'ubuntu-latest' || 'incus-ruby-zig-racc' }}"
     if: ${{ github.repository == 'ruby/racc' && !startsWith(github.event_name, 'pull') }}
     steps:
       - name: Checkout
@@ -38,7 +38,7 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
+    runs-on: "${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository) && 'ubuntu-latest' || 'incus-ruby-zig-racc' }}"
     needs: build
     steps:
       - name: Deploy to GitHub Pages

@@ -11,7 +11,7 @@ permissions:
 jobs:
   push:
     if: github.repository == 'ruby/racc'
-    runs-on: ubuntu-latest
+    runs-on: "${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository) && 'ubuntu-latest' || 'incus-ruby-zig-racc' }}"
 
     environment:
       name: rubygems.org
